@@ -19,6 +19,30 @@
 .equ    RANDOM_NUM,     0x2010  ; Random number generator address
 .equ    BUTTONS,        0x2030  ; Buttons addresses
 
+; button state
+.equ    BUTTON_NONE,    0
+.equ    BUTTON_LEFT,    1
+.equ    BUTTON_UP,      2
+.equ    BUTTON_DOWN,    3
+.equ    BUTTON_RIGHT,   4
+.equ    BUTTON_CHECKPOINT,    5
+
+; array state
+.equ    DIR_LEFT,       1       ; leftward direction
+.equ    DIR_UP,         2       ; upward direction
+.equ    DIR_DOWN,       3       ; downward direction
+.equ    DIR_RIGHT,      4       ; rightward direction
+.equ    FOOD,           5       ; food
+
+; constants
+.equ    NB_ROWS,        8       ; number of rows
+.equ    NB_COLS,        12      ; number of columns
+.equ    NB_CELLS,       96      ; number of cells in GSA
+.equ    RET_ATE_FOOD,   1       ; return value for hit_test when food was eaten
+.equ    RET_COLLISION,  2       ; return value for hit_test when a collision was detected
+.equ    ARG_HUNGRY,     0       ; a0 argument for move_snake when food wasn't eaten
+.equ    ARG_FED,        1       ; a0 argument for move_snake when food was eaten
+
 ; initialize stack pointer
 addi    sp, zero, LEDS
 
@@ -30,8 +54,8 @@ addi    sp, zero, LEDS
 ;     This procedure should never return.
 main:
     ; TODO: Finish this procedure.
-    call    clear_leds
-    ret
+    callr	clear_leds
+    
 
 
 ; BEGIN: clear_leds
@@ -39,12 +63,22 @@ clear_leds:
     stw     zero, LEDS(zero)
     stw     zero, LEDS+4(zero)
     stw     zero, LEDS+8(zero)
+    ret
 
 ; END: clear_leds
 
 
 ; BEGIN: set_pixel
 set_pixel:
+    andi	t0,	    a0,		12
+    andi    t1,		a0,		3
+    slli	t1,		t1,		3
+    add		t1,		t1,		a1
+    addi	t1,		t1,		1
+    ldw		t2,		LEDS(t0)
+    or		t2,		t2,		t1
+    stw		t2,		LEDS(t0)
+    ret
 
 ; END: set_pixel
 
@@ -75,6 +109,53 @@ hit_test:
 
 ; BEGIN: get_input
 get_input:
+    ldw		t0,		BUTTONS+4(zero)
+    andi	t0,		t0,		    31
+    addi	t1,		zero,	    1
+    
+    ; Test no button
+    no_button:
+        bne		t0,		zero,	left_button
+        addi	v0,		zero,	BUTTON_NONE
+    
+    ; Test left button
+    left_button:
+        andi	t2,		t0,		1
+        bne		t1,		t2,		up_button
+        addi	v0,		zero,	BUTTON_LEFT
+    
+    ; Test up button
+    up_button:
+        srli	t2,		t0,		1
+        andi	t2,		t2,		1
+        bne		t1,		t2,		down_button
+        addi	v0,		zero,	BUTTON_UP
+    
+    ; Test down button
+    down_button:
+        srli	t2,		t0,		2
+        andi	t2,		t2,		1
+        bne		t1,		t2,		right_button
+        addi	v0,		zero,	BUTTON_DOWN
+    
+    ; Test right button
+    right_button:
+        srli	t2,		t0,		3
+        andi	t2,		t2,		1
+        bne		t1,		t2,		checkpoint_button
+        addi	v0,		zero,	BUTTON_RIGHT
+
+    ; Test checkpoint button
+    checkpoint_button:
+        srli	t2,		t0,		4
+        andi	t2,		t2,		1
+        bne		t1,		t2,		return
+        addi	v0,		zero,	BUTTON_CHECKPOINT
+    
+    ; Return
+    return:
+        ret
+       
 
 ; END: get_input
 
