@@ -109,26 +109,43 @@ hit_test:
 
 ; BEGIN: get_input
 get_input:
+    #Load current direction
+    ldw		t0,		HEAD_X(zero)
+    ldw		t1,		HEAD_Y(zero)
+    slli	t0,		t0,		3
+    add		t3,		t0,		t1
+    ldw		t4,		GSA(t0)
+    
+    #Load edgecapture
     ldw		t0,		BUTTONS+4(zero)
     andi	t0,		t0,		    31
     addi	t1,		zero,	    1
     
-    ; Test no button
+    # Test no button
     no_button:
         bne		t0,		zero,	left_button
         addi	v0,		zero,	BUTTON_NONE
     
-    ; Test left button
+    # Test left button
     left_button:
+        # test if left pressed
         andi	t2,		t0,		1
         bne		t1,		t2,		up_button
+        # test if direction not right
+        addi	t1,		zero,	DIR_RIGHT
+        beq		t4,		t1,	    up_button
+        #Set return value
         addi	v0,		zero,	BUTTON_LEFT
     
-    ; Test up button
+    # Test up button
     up_button:
         srli	t2,		t0,		1
         andi	t2,		t2,		1
         bne		t1,		t2,		down_button
+        # test if direction not down
+        addi	t1,		zero,	DIR_DOWN
+        beq		t4,		t1,	    down_button
+        #Set return value
         addi	v0,		zero,	BUTTON_UP
     
     ; Test down button
@@ -136,6 +153,10 @@ get_input:
         srli	t2,		t0,		2
         andi	t2,		t2,		1
         bne		t1,		t2,		right_button
+        # test if direction not up
+        addi	t1,		zero,	DIR_UP
+        beq		t4,		t1,	    right_button
+        #Set return value
         addi	v0,		zero,	BUTTON_DOWN
     
     ; Test right button
@@ -143,6 +164,10 @@ get_input:
         srli	t2,		t0,		3
         andi	t2,		t2,		1
         bne		t1,		t2,		checkpoint_button
+        # test if direction not left
+        addi	t1,		zero,	DIR_LEFT
+        beq		t4,		t1,	    checkpoint_button
+        #Set return value
         addi	v0,		zero,	BUTTON_RIGHT
 
     ; Test checkpoint button
@@ -154,8 +179,17 @@ get_input:
     
     ; Return
     return:
+        #Update new direction
+        addi	t1,		zero,	BUTTON_CHECKPOINT
+        beq		v0,		t1,		end
+        addi	t1,		zero,	BUTTON_NONE
+        beq		v0,		t1,		end
+        stw		v0,		GSA(t3)
+        
+        end:
+        #Reset edgecapture
+        stw		zero,	BUTTONS+4(zero)
         ret
-       
 
 ; END: get_input
 
