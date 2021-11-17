@@ -169,6 +169,105 @@ draw_array:
 ; BEGIN: move_snake
 move_snake:
 
+#Through X Head pos and Y head pos of snake, get snake's direction in GSA.
+# Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
+proc_retrieveDirectionWithCoordinates: # (X,Y) => (t3, t7). Output stored in t6
+# Multiply X by 8
+procedure 
+addi t0, zero, 0
+addi t1, zero, 1
+addi t2, zero, 9
+conditionMultiplyBy8:
+blt t1, t2, loopMultiplyBy8 # if compteur < 9 => loop
+
+loopMultiplyBy8:
+add t0, t0, t3  # X = t3
+addi t1, t1, 1
+br conditionMultiplyBy8
+
+# Multiply 8X + Y by 4
+multiplyBy4:
+addi t4, zero, 0
+addi t1, zero, 1
+addi t2, zero 5
+add t5, t7, t0 #t5 = 8X + Y  # Y = t7
+
+conditionMultiplyBy4:
+blt t1, t2, loopMultiplyBy4 # if compteur < 5 => loop
+
+loopMultiplyBy4:
+add t4, t4, t5
+addi t1,t1,1
+br conditionMultiplyBy4
+
+## Get direction's integer value corresponding to Snake's X_Head & Y_Head
+
+stw t6, GSA(t5)
+ret 
+
+### - - - - - - - - - -  Modify the Snake's HEAD - - - - - - - - - - ###
+
+# Retrieve direction through procedure (stored in t6)
+stw t3, HEAD_X
+stw t7, HEAD_Y
+call proc_retrieveDirectionWithCoordinates
+
+
+# Modify HEAD_X and HEAD_Y coordinates through below proc
+
+stw t4, HEAD_X
+stw t5, HEAD_Y
+call proc_modifyCoordinatesBasedOnDirection
+stw HEAD_X, t4
+stw HEAD_Y, t5
+
+# Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
+## Modify X_HEAD or Y_HEAD depending on the direction (through conditonal branching)
+proc_modifyCoordinatesBasedOnDirection: ## /!\ (X,Y) => (t4,t5). Output : (t4, t5) 
+addi t0, zero, 1 #Leftwards
+addi t1, zero, 2 #Upwards
+addi t2, zero, 3 #Downwards
+addi t3, zero, 4 #Rightwards
+
+beq t6, t0, leftCase # if direction is left => leftCase 
+beq t6, t1, upCase  # if direction is up => upCase
+beq t6, t2, downCase # ...
+beq t6, t3, rightCase
+
+leftCase:
+subi t4, t4, 1 # X = X - 1 
+upCase:
+addi t5, t5, 1 # Y = Y + 1 
+downCase:
+subi t5, t5, 1 # Y = Y - 1
+rightCase:
+addi t5, t5, 1 # X = X + 1
+
+ret 
+
+### - - - - - - - - - -  Modify the Snake's TAIL - - - - - - - - - - ###
+
+# Retrieve direction through procedure (stored in t6)
+stw t3, TAIL_X
+stw t7, TAIl_Y
+call proc_retrieveDirectionWithCoordinates
+
+# Modify TAIL_X and TAIL_Y through associated proc if no food is eaten (a0 = 0)
+
+beq a0, zero, foodEatenCase
+
+foodEatenCase:
+stw t4, TAIl_X
+stw t5, TAIL_Y
+call proc_modifyCoordinatesBasedOnDirection
+stw TAIl_X, t4
+stw TAIL_Y, t5
+ret 
+
+
+
+ret
+
 ; END: move_snake
 
 
