@@ -201,24 +201,24 @@ br conditionMultiplyBy4
 
 ## Get direction's integer value corresponding to Snake's X_Head & Y_Head
 
-stw t6, GSA(t5)
+ldw t6, GSA(t5)
 ret 
 
 ### - - - - - - - - - -  Modify the Snake's HEAD - - - - - - - - - - ###
 
 # Retrieve direction through procedure (stored in t6)
-ldw t3, HEAD_X
-ldw t7, HEAD_Y
+ldw t3, HEAD_X(zero)
+ldw t7, HEAD_Y(zero)
 call proc_retrieveDirectionWithCoordinates
 
 
 # Modify HEAD_X and HEAD_Y coordinates through below proc
 
-ldw t4, HEAD_X
-ldw t5, HEAD_Y
+ldw t4, HEAD_X(zero)
+ldw t5, HEAD_Y(zero)
 call proc_modifyCoordinatesBasedOnDirection
-stw t4, HEAD_X
-stw t5, HEAD_Y
+stw t4, HEAD_X(zero)
+stw t5, HEAD_Y(zero)
 
 # Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
 ## Modify X_HEAD or Y_HEAD depending on the direction (through conditonal branching)
@@ -248,8 +248,8 @@ ret
 ### - - - - - - - - - -  Modify the Snake's TAIL - - - - - - - - - - ###
 
 # Retrieve direction through procedure (stored in t6)
-ldw t3, TAIL_X
-ldw t7, TAIl_Y
+ldw t3, TAIL_X(zero)
+ldw t7, TAIl_Y(zero)
 call proc_retrieveDirectionWithCoordinates
 
 # Modify TAIL_X and TAIL_Y through associated proc if no food is eaten (a0 = 0)
@@ -257,13 +257,12 @@ call proc_retrieveDirectionWithCoordinates
 beq a0, zero, foodEatenCase
 
 foodEatenCase:
-ldw t4, TAIl_X
-ldw t5, TAIL_Y
+ldw t4, TAIl_X(zero)
+ldw t5, TAIL_Y(zero)
 call proc_modifyCoordinatesBasedOnDirection
-stw t4, TAIL_X
-stw t5, TAIL_Y
+stw t4, TAIL_X(zero)
+stw t5, TAIL_Y(zero)
 ret 
-
 
 
 ret
