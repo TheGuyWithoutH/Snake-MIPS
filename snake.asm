@@ -173,7 +173,6 @@ move_snake:
 # Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
 proc_retrieveDirectionWithCoordinates: # (X,Y) => (t3, t7). Output stored in t6
 # Multiply X by 8
-procedure 
 addi t0, zero, 0
 addi t1, zero, 1
 addi t2, zero, 9
