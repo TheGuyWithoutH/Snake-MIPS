@@ -91,6 +91,18 @@ display_score:
 
 ; BEGIN: init_game
 init_game:
+    stw		zero,		HEAD_X(zero)
+    stw		zero,		HEAD_Y(zero)
+    stw		zero,		TAIL_X(zero)
+    stw		zero,		TAIL_Y(zero)
+    addi	t0,	        zero,		 DIR_RIGHT  
+    stw		t0,		    GSA(zero)
+    stw		zero,		SCORE(zero)
+
+    # call    create_food
+    
+
+    jmpi    main_loop
 
 ; END: init_game
 
@@ -103,6 +115,65 @@ create_food:
 
 ; BEGIN: hit_test
 hit_test:
+    #Load current direction
+    ldw		t0,		HEAD_X(zero)
+    ldw		t1,		HEAD_Y(zero)
+    slli	t2,		t0,		    3
+    add		t2,		t2,		    t1
+    slli	t2,		t2,		    2
+    ldw		t3,		GSA(t2)
+
+    #Get Next Cell and Check game limits
+    left_hit:
+        addi	t4,		zero,		DIR_LEFT
+        bne		t3,		t4,		    up_hit
+        addi	t4,		t2,		    -32
+        ldw		t5,		GSA(t4)
+        bne		t0,		zero,		check_cell
+        addi	v0,		zero,		2
+        br		end_hit
+        
+    up_hit:
+        addi	t4,		zero,		DIR_UP
+        bne		t3,		t4,		    down_hit
+        addi	t4,		t2,		    -4
+        ldw		t5,		GSA(t4)
+        bne		t1,		zero,		check_cell
+        addi	v0,		zero,		2
+        br		end_hit
+
+    down_hit:
+        addi	t4,		zero,		DIR_DOWN
+        bne		t3,		t4,		    down_hit
+        addi	t4,		t2,		    4
+        ldw		t5,		GSA(t4)
+        addi	t4,		zero,		7
+        bne		t1,		t4,		    check_cell
+        addi	v0,		zero,		2
+        br		end_hit
+
+    right_hit:
+        addi	t4,		zero,		DIR_RIGHT
+        bne		t3,		t4,		    check_cell
+        addi	t4,		t2,		    32
+        ldw		t5,		GSA(t4)
+        addi	t4,		zero,		11
+        bne		t0,		t4,		    check_cell
+        addi	v0,		zero,		2
+        br		end_hit
+
+    #Check Snake Body
+    check_cell:
+        addi	v0,		zero,		0               #no collision
+        beq		t5,		zero,	    end_hit
+        addi	v0,		zero,		1               #food collision
+        addi	t0,		zero,		5
+        beq		t5,		t0,	        end_hit
+        addi	v0,		zero,		2               #body collision
+    #Check Food
+
+    end_hit:
+        ret
 
 ; END: hit_test
 
@@ -112,9 +183,10 @@ get_input:
     #Load current direction
     ldw		t0,		HEAD_X(zero)
     ldw		t1,		HEAD_Y(zero)
-    slli	t0,		t0,		3
-    add		t3,		t0,		t1
-    ldw		t4,		GSA(t0)
+    slli	t0,		t0,		    3
+    add		t3,		t0,		    t1
+    slli	t3,		t3,		    2
+    ldw		t4,		GSA(t3)
     
     #Load edgecapture
     ldw		t0,		BUTTONS+4(zero)
@@ -196,6 +268,32 @@ get_input:
 
 ; BEGIN: draw_array
 draw_array:
+    add	    t0,		zero,		zero
+    addi	t3,		zero,		96
+    add		t4,		zero,		ra
+    
+
+    loop_leds:
+        #check if end of the array
+        bge		t0,		t3,		    end_draw
+        #Value of the current LED of the game
+        ldw		t1,		GSA(t0)
+        addi	t0,		t0,		    1
+        #If nothing in it, go to next led
+        beq		t1,		zero,		loop_leds
+
+        #Find the coordinates
+        addi 	a1,		t0,		    -1
+        andi	a1,		a1,		    7
+
+        addi 	a0,		t0,		    -1
+        srli	a0,		a0,		    3
+
+        call	set_pixel
+        br		loop_leds
+    
+    end_draw:
+        jmp		t4
 
 ; END: draw_array
 
