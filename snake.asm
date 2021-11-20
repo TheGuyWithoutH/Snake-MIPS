@@ -268,25 +268,26 @@ get_input:
 
 ; BEGIN: draw_array
 draw_array:
-    add	    t0,		zero,		zero
+    add	    t5,		zero,		zero
     addi	t3,		zero,		96
     add		t4,		zero,		ra
     
 
     loop_leds:
         #check if end of the array
-        bge		t0,		t3,		    end_draw
+        bge		t5,		t3,		    end_draw
         #Value of the current LED of the game
-        ldw		t1,		GSA(t0)
-        addi	t0,		t0,		    1
+        slli	t6,		t5,		    2
+        ldw		t1,		GSA(t6)
+        addi	t5,		t5,		    1
         #If nothing in it, go to next led
         beq		t1,		zero,		loop_leds
 
         #Find the coordinates
-        addi 	a1,		t0,		    -1
+        addi 	a1,		t5,		    -1
         andi	a1,		a1,		    7
 
-        addi 	a0,		t0,		    -1
+        addi 	a0,		t5,		    -1
         srli	a0,		a0,		    3
 
         call	set_pixel
