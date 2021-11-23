@@ -110,6 +110,19 @@ init_game:
 ; BEGIN: create_food
 create_food:
 
+    valid_food_position_generation:
+        ldw t3, RANDOM_NUM(zero) # Generate random num
+        andi t4, t3, 0xFF       # Get first byte (lowest byte)
+        ldw t5, GSA(t4)         # Retrieve cell content at first byte's adress
+        beq t5, zero, set_food_in_game       # If content == 0, we can set the food (no snake & food at this position)
+        br valid_food_position_generation   # Else : we loop into the branch until we find a valid position
+    
+    set_food_in_game:
+        addi t7, 5
+        stw t7, GSA(t4)     # Add 5 to the GSA at the randomly generated valid position. 5 means that there's if food
+
+    ret    
+
 ; END: create_food
 
 
