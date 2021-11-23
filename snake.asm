@@ -300,105 +300,96 @@ draw_array:
 
 
 ; BEGIN: move_snake
+
 move_snake:
 
-#Through X Head pos and Y head pos of snake, get snake's direction in GSA. Then do if statements: if dir = x => modify X_head & Y_HEAD accordingly
-# Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
-proc_retrieveDirectionWithCoordinates: # (X,Y) => (t3, t7). Output stored in t6
-# Multiply X by 8
-addi t0, zero, 0
-addi t1, zero, 1
-addi t2, zero, 9
-conditionMultiplyBy8:
-bne t1, t2, loopMultiplyBy8 # if compteur < 9 => loop
+    get_direction:
+        ldw		t0,		HEAD_X(zero)
+        ldw		t1,		HEAD_Y(zero)
+        slli	t2,		t0,		    3
+        add		t2,		t2,		    t1
+        slli	t2,		t2,		    2
+        ldw		t6,		GSA(t2)
 
-loopMultiplyBy8:
-add t0, t0, t3  # X = t3
-addi t1, t1, 1
-br conditionMultiplyBy8
+    modify_snake_head_pos:
+        addi t2, zero, 1 #Leftwards
+        addi t3, zero, 2 #Upwards
+        addi t4, zero, 3 #Downwards
+        addi t5, zero, 4 #Rightwards
+        addi t7, zero, 1 # Value 1 for substraction
 
-# Multiply 8X + Y by 4
-multiplyBy4:
-addi t4, zero, 0
-addi t1, zero, 1
-addi t2, zero, 5
-add t5, t7, t0 #t5 = 8X + Y  # Y = t7
+        beq t6, t2, leftCase # if direction is left => leftCase 
+        beq t6, t3, upCase  # if direction is up => upCase
+        beq t6, t4, downCase # ...
+        beq t6, t5, rightCase
 
-conditionMultiplyBy4:
-bne t1, t2, loopMultiplyBy4 # if compteur < 5 => loop
+        leftCase:
+            sub t0, t0, t7 # X = X - 1
+            stw t0, X_HEAD(zero)
+            br modify_snake_tail_pos
 
-loopMultiplyBy4:
-add t4, t4, t5
-addi t1,t1,1
-br conditionMultiplyBy4
+        upCase:
+            addi t1, t1, 1 # Y = Y + 1
+            stw t1, Y_HEAD(zero)
+            br modify_snake_tail_pos
 
-## Get direction's integer value corresponding to Snake's X_Head & Y_Head
+        downCase:
+            sub t1, t1, t7 # Y = Y - 1
+            stw t1, X_HEAD(zero)
+            br modify_snake_tail_pos
 
-ldw t6, GSA(t5)
-ret 
+        rightCase:
+            addi t0, t0, 1 # X = X + 1
+            stw t0, X_HEAD(zero)
+            br modify_snake_tail_pos
+        
+    modify_snake_tail_pos:
+        beq a0, zero, food_not_eaten_case #If food not eaten, we cut the snake's tail by one unit, according to the direction
+        br endMove
 
-### - - - - - - - - - -  Modify the Snake's HEAD - - - - - - - - - - ###
+        food_not_eaten_case:
 
-# Retrieve direction through procedure (stored in t6)
-ldw t3, HEAD_X(zero)
-ldw t7, HEAD_Y(zero)
-call proc_retrieveDirectionWithCoordinates
-
-
-# Modify HEAD_X and HEAD_Y coordinates through below proc
-
-ldw t4, HEAD_X(zero)
-ldw t5, HEAD_Y(zero)
-call proc_modifyCoordinatesBasedOnDirection
-stw t4, HEAD_X(zero)
-stw t5, HEAD_Y(zero)
-
-# Procedure  - - - -  - - - -  - - - -  - - - -  - - - -  - - - -  - - - - 
-## Modify X_HEAD or Y_HEAD depending on the direction (through conditonal branching)
-proc_modifyCoordinatesBasedOnDirection: ## /!\ (X,Y) => (t4,t5). Output : (t4, t5) 
-addi t0, zero, 1 #Leftwards
-addi t1, zero, 2 #Upwards
-addi t2, zero, 3 #Downwards
-addi t3, zero, 4 #Rightwards
-addi t7, zero, 1 # Value 1 for substraction
-
-beq t6, t0, leftCase # if direction is left => leftCase 
-beq t6, t1, upCase  # if direction is up => upCase
-beq t6, t2, downCase # ...
-beq t6, t3, rightCase
-
-leftCase:
-sub t4, t4, t7 # X = X - 1 
-upCase:
-addi t5, t5, 1 # Y = Y + 1 
-downCase:
-sub t5, t5, t7 # Y = Y - 1
-rightCase:
-addi t5, t5, 1 # X = X + 1
-
-ret 
-
-### - - - - - - - - - -  Modify the Snake's TAIL - - - - - - - - - - ###
-
-# Retrieve direction through procedure (stored in t6)
-ldw t3, TAIL_X(zero)
-ldw t7, TAIl_Y(zero)
-call proc_retrieveDirectionWithCoordinates
-
-# Modify TAIL_X and TAIL_Y through associated proc if no food is eaten (a0 = 0)
-
-beq a0, zero, foodEatenCase
-
-foodEatenCase:
-ldw t4, TAIl_X(zero)
-ldw t5, TAIL_Y(zero)
-call proc_modifyCoordinatesBasedOnDirection
-stw t4, TAIL_X(zero)
-stw t5, TAIL_Y(zero)
-ret 
+            ldw		t0,		TAIL_X(zero)
+            ldw		t1,		TAIL_Y(zero)
+            slli	t2,		t0,		    3
+            add		t2,		t2,		    t1
+            slli	t2,		t2,		    2
+            ldw		t6,		GSA(t2)
 
 
-ret
+            addi t2, zero, 1 #Leftwards
+            addi t3, zero, 2 #Upwards
+            addi t4, zero, 3 #Downwards
+            addi t5, zero, 4 #Rightwards
+            addi t7, zero, 1 # Value 1 for substraction
+
+            beq t6, t2, leftCase # if tail's direction is left => leftCase 
+            beq t6, t3, upCase  # if tail's direction is up => upCase
+            beq t6, t4, downCase # ...
+            beq t6, t5, rightCase
+
+            leftCase:
+                sub t0, t0, t7 # X = X - 1
+                stw t0, TAIL_X(zero)
+                br endMove
+
+            upCase:
+                addi t1, t1, 1 # Y = Y + 1
+                stw t1, TAIL_Y(zero)
+                br endMove
+
+            downCase:
+                sub t1, t1, t7 # Y = Y - 1
+                stw t1, TAIL_X(zero)
+                br endMove
+
+            rightCase:
+                addi t0, t0, 1 # X = X + 1
+                stw t0, TAIL_X(zero)
+                br endMove
+
+    endMove:
+        ret
 
 ; END: move_snake
 
