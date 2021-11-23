@@ -56,6 +56,11 @@ main:
     ; TODO: Finish this procedure.
     callr	clear_leds
     
+    ##Food Creation##
+    call create_food
+    call draw_array
+    
+    
 
 
 ; BEGIN: clear_leds
