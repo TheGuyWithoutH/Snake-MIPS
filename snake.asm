@@ -53,12 +53,39 @@ addi    sp, zero, LEDS
 ; return values
 ;     This procedure should never return.
 main:
-    ; TODO: Finish this procedure.
-    callr	clear_leds
+    # TODO: Finish this procedure.
+    stw		zero,		CP_VALID(zero)
+    jmpi    init_game
     
-    ##Food Creation##
-    call create_food
-    call draw_array
+
+    main_loop:
+        call		wait
+        call        clear_leds
+        call		get_input
+        call        hit_test
+        add         a0,     zero,       v0
+        call        move_snake
+        call		clear_leds
+        call		draw_array
+        br          main_loop
+
+    wait:
+        addi		t0,		zero,		25000
+        addi        t1,     zero,       100
+
+        loop_wait:
+            beq		t0,		zero,		change_loop
+            addi	t0,		t0,		    -1
+            br		loop_wait
+        
+        change_loop:
+            beq		t1,		zero,		end_wait
+            addi	t1,		t1,		    -1
+            addi		t0,		zero,		25000
+            br		loop_wait
+        
+        end_wait:
+            ret
     
     
 
@@ -114,16 +141,18 @@ init_game:
 
 ; BEGIN: create_food
 create_food:
-
     valid_food_position_generation:
         ldw t3, RANDOM_NUM(zero) # Generate random num
         andi t4, t3, 0xFF       # Get first byte (lowest byte)
+        addi t0, zero,  96
+        bge		t4,		t0,		valid_food_position_generation
+        blt     t4,     zero,   valid_food_position_generation
         ldw t5, GSA(t4)         # Retrieve cell content at first byte's adress
         beq t5, zero, set_food_in_game       # If content == 0, we can set the food (no snake & food at this position)
         br valid_food_position_generation   # Else : we loop into the branch until we find a valid position
-    
+
     set_food_in_game:
-        addi t7, 5
+        addi t7, zero, 5
         stw t7, GSA(t4)     # Add 5 to the GSA at the randomly generated valid position. 5 means that there's if food
 
     ret    
@@ -327,44 +356,48 @@ move_snake:
         slli	t2,		t0,		    3
         add		t2,		t2,		    t1
         slli	t2,		t2,		    2
-        ldw		t6,		GSA(t2)
+        ldw		t3,		GSA(t2)
 
     modify_snake_head_pos:
-        addi t2, zero, 1 #Leftwards
-        addi t3, zero, 2 #Upwards
-        addi t4, zero, 3 #Downwards
-        addi t5, zero, 4 #Rightwards
-        addi t7, zero, 1 # Value 1 for substraction
 
-        beq t6, t2, leftCase # if direction is left => leftCase 
-        beq t6, t3, upCase  # if direction is up => upCase
-        beq t6, t4, downCase # ...
-        beq t6, t5, rightCase
-
-        leftCase:
-            sub t0, t0, t7 # X = X - 1
-            stw t0, X_HEAD(zero)
+        leftCaseHead:
+            addi t4, zero, DIR_LEFT     #Leftwards
+            bne t3, t4,  upCaseHead   # if direction isn't left => exit leftCase 
+            addi t0, t0, -1 # X = X - 1
+            stw t0, HEAD_X(zero)
+            addi	t2,		t2,		    -32   #Add Direction to new Head Cell
+            stw		t3,		GSA(t2)
             br modify_snake_tail_pos
 
-        upCase:
+        upCaseHead:
+            addi t4, zero, DIR_UP #Upwards
+            bne t3, t4,  downCaseHead  # if direction isn't up => exit upCase 
+            addi t1, t1, -1 # Y = Y - 1
+            stw t1, HEAD_Y(zero)
+            addi	t2,		t2,		    -4    #Add Direction to new Head Cell
+            stw		t3,		GSA(t2)
+            br modify_snake_tail_pos
+
+        downCaseHead:
+            addi t4, zero, DIR_DOWN #Downwards
+            bne t3, t4,  rightCaseHead  # if direction isn't down => exit downCase 
             addi t1, t1, 1 # Y = Y + 1
-            stw t1, Y_HEAD(zero)
+            stw t1, HEAD_Y(zero)
+            addi	t2,		t2,		    4     #Add Direction to new Head Cell
+            stw		t3,		GSA(t2)
             br modify_snake_tail_pos
 
-        downCase:
-            sub t1, t1, t7 # Y = Y - 1
-            stw t1, X_HEAD(zero)
-            br modify_snake_tail_pos
-
-        rightCase:
-            addi t0, t0, 1 # X = X + 1
-            stw t0, X_HEAD(zero)
+        rightCaseHead:
+            addi t0, t0, 1 # X = X + 1
+            stw t0, HEAD_X(zero)
+            addi	t2,		t2,		    32    #Add Direction to new Head Cell
+            stw		t3,		GSA(t2)
             br modify_snake_tail_pos
         
     modify_snake_tail_pos:
-        beq a0, zero, food_not_eaten_case #If food not eaten, we cut the snake's tail by one unit, according to the direction
-        br endMove
-
+        bne a0, zero, endMove 
+        
+        #If food not eaten, we cut the snake's tail by one unit, according to the direction
         food_not_eaten_case:
 
             ldw		t0,		TAIL_X(zero)
@@ -372,43 +405,39 @@ move_snake:
             slli	t2,		t0,		    3
             add		t2,		t2,		    t1
             slli	t2,		t2,		    2
-            ldw		t6,		GSA(t2)
+            ldw		t3,		GSA(t2)
+            stw     zero,   GSA(t2)
 
-
-            addi t2, zero, 1 #Leftwards
-            addi t3, zero, 2 #Upwards
-            addi t4, zero, 3 #Downwards
-            addi t5, zero, 4 #Rightwards
-            addi t7, zero, 1 # Value 1 for substraction
-
-            beq t6, t2, leftCase # if tail's direction is left => leftCase 
-            beq t6, t3, upCase  # if tail's direction is up => upCase
-            beq t6, t4, downCase # ...
-            beq t6, t5, rightCase
-
-            leftCase:
-                sub t0, t0, t7 # X = X - 1
+            LeftCaseTail:
+                addi t4, zero, DIR_LEFT     #Leftwards
+                bne t3, t4,  upCaseTail   # if direction isn't left => exit leftCase 
+                addi t0, t0, -1 # X = X - 1
                 stw t0, TAIL_X(zero)
                 br endMove
 
-            upCase:
-                addi t1, t1, 1 # Y = Y + 1
+            upCaseTail:
+                addi t4, zero, DIR_UP #Upwards
+                bne t3, t4,  downCaseTail  # if direction isn't up => exit upCase 
+                addi t1, t1, -1 # Y = Y + 1
                 stw t1, TAIL_Y(zero)
                 br endMove
 
-            downCase:
-                sub t1, t1, t7 # Y = Y - 1
-                stw t1, TAIL_X(zero)
+            downCaseTail:
+                addi t4, zero, DIR_DOWN #Downwards
+                bne t3, t4,  rightCaseTail  # if direction isn't down => exit downCase 
+                addi t1, t1, 1 # Y = Y - 1
+                stw t1, TAIL_Y(zero)
                 br endMove
 
-            rightCase:
-                addi t0, t0, 1 # X = X + 1
+            rightCaseTail:
+                addi t0, t0, 1 # X = X + 1
                 stw t0, TAIL_X(zero)
                 br endMove
 
+
     endMove:
         ret
-
+        
 ; END: move_snake
 
 
