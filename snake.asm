@@ -60,18 +60,54 @@ main:
 
     main_loop:
         call		wait
-        call        clear_leds
-        call		get_input
-        call        hit_test
-        add         a0,     zero,       v0
-        call        move_snake
-        call		clear_leds
-        call		draw_array
+
+        main_input:
+            call		get_input
+
+        checkpoint:
+            addi    t0,     zero,       5
+            bne     v0,     t0,         no_checkpoint
+            call    restore_checkpoint
+            beq     v0,     zero,       main_input
+            br      led_blink
+
+
+        no_checkpoint:
+            call        hit_test
+
+        no_food_eaten:
+            addi    t0,     zero,       1
+            add     a0,     zero,       v0
+            beq     v0,     t0,         food_eaten
+            bne     v0,     zero,       init_game
+            call    move_snake     
+            br      main_display
+
+        food_eaten:
+            ldw     t0,     SCORE(zero)
+            addi    t0,     zero,       1
+            stw     t0,     SCORE(zero)
+            call    display_score
+            call    move_snake
+            call    create_food
+
+            #call    save_checkpoint
+            beq     v0,     zero,       main_display
+        
+        led_blink:
+            call    blink_score
+
+
+
+        main_display:
+            call		clear_leds
+            call		draw_array
+
         br          main_loop
 
     wait:
         addi		t0,		zero,		25000
-        addi        t1,     zero,       100
+        addi        t1,     zero,       75
 
         loop_wait:
             beq		t0,		zero,		change_loop
@@ -86,9 +122,6 @@ main:
         
         end_wait:
             ret
-    
-    
-
 
 ; BEGIN: clear_leds
 clear_leds:
@@ -117,6 +150,7 @@ set_pixel:
 
 ; BEGIN: display_score
 display_score:
+    ret
 
 ; END: display_score
 
@@ -127,12 +161,26 @@ init_game:
     stw		zero,		HEAD_Y(zero)
     stw		zero,		TAIL_X(zero)
     stw		zero,		TAIL_Y(zero)
-    addi	t0,	        zero,		 DIR_RIGHT  
-    stw		t0,		    GSA(zero)
+
+    addi    t0,         zero,       384
+    addi    t1,         zero,       0
+
+    reset_GSA:
+        bge		t1,		t0,		    init_GSA
+        stw     zero,       GSA(t1)
+        addi    t1,     t1,         4
+        br      reset_GSA
+
+    init_GSA:
+        addi	t0,	        zero,		 DIR_RIGHT  
+        stw		t0,		    GSA(zero)
+
     stw		zero,		SCORE(zero)
 
-    # call    create_food
-    
+    call    create_food
+
+    call		clear_leds
+    call		draw_array
 
     jmpi    main_loop
 
@@ -147,6 +195,7 @@ create_food:
         addi t0, zero,  96
         bge		t4,		t0,		valid_food_position_generation
         blt     t4,     zero,   valid_food_position_generation
+        slli	t4,		t4,		    2
         ldw t5, GSA(t4)         # Retrieve cell content at first byte's adress
         beq t5, zero, set_food_in_game       # If content == 0, we can set the food (no snake & food at this position)
         br valid_food_position_generation   # Else : we loop into the branch until we find a valid position
@@ -443,17 +492,20 @@ move_snake:
 
 ; BEGIN: save_checkpoint
 save_checkpoint:
+    ret
 
 ; END: save_checkpoint
 
 
 ; BEGIN: restore_checkpoint
 restore_checkpoint:
+    ret
 
 ; END: restore_checkpoint
 
 
 ; BEGIN: blink_score
 blink_score:
+    ret
 
 ; END: blink_score
