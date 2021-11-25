@@ -149,8 +149,47 @@ set_pixel:
 
 
 ; BEGIN: display_score
+
 display_score:
+
+    ldw t1, SCORE(zero) #get the current score
+
+    addi t0, 10
+    addi t2, 100
+    blt t1, t0, preliminary                        
+    blt t1, t2, inferior_to_100
+    
+    
+    addi t4, 0 # Counter dizaine
+
+    addi t6, 1 ## Valeur 1
+
+    inferior_to_100:
+        addi t1, t1, -10                #On décrémente t1 de 10
+        addi t4, t4, 1                  #On ajoute 1 au conteur des dizaines
+        bge t1, t0, inferior_to_100     #Tant que c'est supérieur à 10, on continue
+                                        #Si inférieur à 10, on passe à la suite, c'est réel
+
+    #t4 = chiffre des dizaines, t3 chiffre des unités
+    preliminary:
+        add  t3, zero, t1
+        addi t1, zero, 0 #Ca sera le produit de t4 avec 4
+        addi t5, zero, 0 #Ca sera le produit de t3 avec 4
+
+    addi t2, zero, 4 #Counter           
+    multiplyBy4:
+        add t1, t1, t4
+        add t5, t5, t3
+        addi t2, t2, -1
+        bge t2, t6, multiplyBy4
+
+    stw digit_map(zero), SEVEN_SEGS(zero)      # Initiliaze the first 7 seg at 0
+    stw digit_map(zero), SEVEN_SEGS+4(zero)      # Initiliaze the second 7 seg at 0
+    stw digit_map(t1), SEVEN_SEGS+8(zero)       # Set the third 7 seg
+    stw digit_map(t5), SEVEN_SEGS+12(zero)  # Set the 4th 7 seg
+
     ret
+
 
 ; END: display_score
 
@@ -506,6 +545,17 @@ restore_checkpoint:
 
 ; BEGIN: blink_score
 blink_score:
+    addi t0, zero, 5 # Blinking 5 times 
+    blinking_loop:
+        clear_7segs:
+            stw zero, SEVEN_SEGS(zero)
+            stw zero, SEVEN_SEGS+4(zero)
+            stw zero, SEVEN_SEGS+8(zero) 
+            stw zero, SEVEN_SEGS+12(zero)
+        call wait
+        call display_score
+        addi t0, t0, -1
+        bge t0, zero, blinking_loop
     ret
 
 ; END: blink_score
