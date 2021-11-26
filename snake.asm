@@ -153,16 +153,10 @@ set_pixel:
 display_score:
 
     ldw t1, SCORE(zero) #get the current score
-
-    addi t0, zero, 10
-    addi t2, zero, 100
-    blt t1, t0, preliminary                        
-    blt t1, t2, inferior_to_100
-    
-    
     addi t4, zero, 0 # Counter dizaine
 
-    addi t6, zero, 1 ## Valeur 1
+    addi t0, zero, 10
+    blt t1, t0, multiply_by_4                
 
     inferior_to_100:
         addi t1, t1, -10                #On décrémente t1 de 10
@@ -170,27 +164,18 @@ display_score:
         bge t1, t0, inferior_to_100     #Tant que c'est supérieur à 10, on continue
                                         #Si inférieur à 10, on passe à la suite, c'est réel
 
-    #t4 = chiffre des dizaines, t3 chiffre des unités
-    preliminary:
-        add  t3, zero, t1
-        addi t1, zero, 0 #Ca sera le produit de t4 avec 4
-        addi t5, zero, 0 #Ca sera le produit de t3 avec 4
-
-    addi t2, zero, 4 #Counter           
-    multiplyBy4:
-        add t1, t1, t4
-        add t5, t5, t3
-        addi t2, t2, -1
-        bge t2, t6, multiplyBy4
+    multiply_by_4:
+        slli t1, t1, 2
+        slli t4, t4, 2
     
-    ldw t0, digit_map(zero)
     ldw t1, digit_map(t1)
-    ldw t5, digit_map(t5)
-    
+    ldw t4, digit_map(t4)
+    ldw t0, digit_map(zero)
+
     stw t0, SEVEN_SEGS(zero)      # Initiliaze the first 7 seg at 0
     stw t0, SEVEN_SEGS+4(zero)      # Initiliaze the second 7 seg at 0
-    stw t1, SEVEN_SEGS+8(zero)       # Set the third 7 seg
-    stw t5, SEVEN_SEGS+12(zero)  # Set the 4th 7 seg
+    stw t4, SEVEN_SEGS+8(zero)       # Set the third 7 seg
+    stw t1, SEVEN_SEGS+12(zero)  # Set the 4th 7 seg
 
     ret
 
