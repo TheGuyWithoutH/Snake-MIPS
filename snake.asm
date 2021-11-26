@@ -85,7 +85,7 @@ main:
 
         food_eaten:
             ldw     t0,     SCORE(zero)
-            addi    t0,     zero,       1
+            addi    t0,     t0,       1
             stw     t0,     SCORE(zero)
             call    display_score
             call    move_snake
@@ -534,18 +534,24 @@ restore_checkpoint:
 
 ; BEGIN: blink_score
 blink_score:
-    addi t0, zero, 5 # Blinking 5 times 
+    addi    t2,     zero, 5 # Blinking 5 times 
+    add     t3,     zero,       ra
+
     blinking_loop:
+
         clear_7segs:
             stw zero, SEVEN_SEGS(zero)
             stw zero, SEVEN_SEGS+4(zero)
             stw zero, SEVEN_SEGS+8(zero) 
             stw zero, SEVEN_SEGS+12(zero)
-        call wait
-        call display_score
-        addi t0, t0, -1
-        bge t0, zero, blinking_loop
-    ret
+
+        call    wait
+        call    display_score
+        call    wait
+        addi t2, t2, -1
+        bge t2, zero, blinking_loop
+
+    jmp		t3
 
 ; END: blink_score
 
