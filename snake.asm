@@ -534,8 +534,8 @@ restore_checkpoint:
 
 ; BEGIN: blink_score
 blink_score:
-    addi    t2,     zero, 5 # Blinking 5 times 
-    add     t3,     zero,       ra
+    addi    t5,     zero, 5 # Blinking 5 times 
+    add     t6,     zero,       ra
 
     blinking_loop:
 
@@ -548,10 +548,10 @@ blink_score:
         call    wait
         call    display_score
         call    wait
-        addi t2, t2, -1
-        bge t2, zero, blinking_loop
+        addi t5, t5, -1
+        bge t5, zero, blinking_loop
 
-    jmp		t3
+    jmp		t6
 
 ; END: blink_score
 
