@@ -534,7 +534,7 @@ save_checkpoint:
         beq t1, zero, copy_into_CP         # Multiple 10 => On copie
 
     addi v0, zero, 0                        #Sinon, on set v0 à 0
-    br end
+    br end_save
 
     copy_into_CP:
         addi v0, zero, 1
@@ -566,7 +566,7 @@ save_checkpoint:
 
                 addi t0, t0, 1
                 blt t0, t3, 96_loop    
-    end:
+    end_save:
         ret
 
 ; END: save_checkpoint
@@ -580,7 +580,7 @@ restore_checkpoint:
     beq t1, t0, restore
 
     addi v0, zero, 0
-    br end
+    br end_restore
 
     restore:
         addi v0, zero, 1
@@ -611,7 +611,7 @@ restore_checkpoint:
                 addi t0, t0, 1
                 blt t0, t3, 96_loop_v2  
     
-    end:
+    end_restore:
         ret
 
 ; END: restore_checkpoint
