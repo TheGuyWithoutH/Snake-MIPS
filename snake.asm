@@ -520,14 +520,99 @@ move_snake:
 
 ; BEGIN: save_checkpoint
 save_checkpoint:
-    ret
+
+    addi t0, zero, 10
+    ldw t1, SCORE(zero)
+
+    blt t1, t0, check_multiple_10 #Si inférieur à 10, on check direct si c'est un multiple de 10
+
+    modulo_10_loop:
+        addi t1, t1, -10                #On décrémente t1 de 10
+        bge t1, t0, modulo_10_loop     #Tant que c'est supérieur à 10, on continue
+
+    check_multiple_10:
+        beq t1, zero, copy_into_CP         # Multiple 10 => On copie
+
+    addi v0, zero, 0                        #Sinon, on set v0 à 0
+    br end
+
+    copy_into_CP:
+        addi v0, zero, 1
+        stw v0, CP_VALID(zero)
+
+
+        ldw t0, HEAD_X(zero)
+        stw t0, CP_HEAD_X(zero)
+
+        ldw t0, HEAD_Y(zero)
+        stw t0, CP_HEAD_Y(zero)
+        
+        ldw t0, TAIL_X(zero)
+        stw t0, CP_TAIL_X(zero)
+
+        ldw t0, TAIL_Y(zero)
+        stw t0, CP_TAIL_Y(zero)
+
+        ldw t0, SCORE(zero)
+        stw t0, CP_SCORE(zero)
+
+        copy_GSA:
+            addi t0, zero, 0
+            addi t3, zero, 96
+            96_loop:
+                slli t2, t0, 2
+                ldw t1, GSA(t2)
+                stw t1, CP_GSA(t2)
+
+                addi t0, t0, 1
+                blt t0, t3, 96_loop    
+    end:
+        ret
 
 ; END: save_checkpoint
 
 
 ; BEGIN: restore_checkpoint
 restore_checkpoint:
-    ret
+
+    addi t0, zero, 1
+    ldw t1, CP_VALID(zero)
+    beq t1, t0, restore
+
+    addi v0, zero, 0
+    br end
+
+    restore:
+        addi v0, zero, 1
+
+        ldw t0, CP_HEAD_X(zero)
+        stw t0, HEAD_X(zero)
+
+        ldw t0, CP_HEAD_Y(zero)
+        stw t0, HEAD_Y(zero)
+        
+        ldw t0, CP_TAIL_X(zero)
+        stw t0, TAIL_X(zero)
+
+        ldw t0, CP_TAIL_Y(zero)
+        stw t0, TAIL_Y(zero)
+
+        ldw t0, CP_SCORE(zero)
+        stw t0, SCORE(zero)
+
+        restore_GSA:
+            addi t0, zero, 0
+            addi t3, zero, 96
+            96_loop_v2:
+                slli t2, t0, 2
+                ldw t1, CP_GSA(t2)
+                stw t1, GSA(t2)
+
+                addi t0, t0, 1
+                blt t0, t3, 96_loop_v2  
+    
+    end:
+        ret
 
 ; END: restore_checkpoint
 
